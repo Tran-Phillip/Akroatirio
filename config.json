@@ -1,0 +1,16 @@
+{
+    "dev":{
+        "twitch_config": {
+            "username": "apropori",
+            "secret": "xbjizio1suldbtw3w3odc8qg0kcnh9", 
+            "channels": [
+                "apropori"
+            ]
+        },
+        "obs_config": {
+            "host": "localhost",
+            "port": 4444,
+            "password": "optional password"
+        }
+    }
+}

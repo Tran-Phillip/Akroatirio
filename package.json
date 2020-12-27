@@ -1,0 +1,23 @@
+{
+  "name": "akroatirio",
+  "version": "1.0.0",
+  "description": "Twitch / OBS plugin that renders an audience to the stream and allows them to emote",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tran-Phillip/Akroatirio.git"
+  },
+  "author": "Phillip Tran",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Tran-Phillip/Akroatirio/issues"
+  },
+  "homepage": "https://github.com/Tran-Phillip/Akroatirio#readme",
+  "devDependencies": {
+    "obs-websocket-js": "^4.0.2",
+    "tmi.js": "^1.7.1"
+  }
+}
