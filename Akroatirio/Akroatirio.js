@@ -4,9 +4,11 @@ const OBSWebSocket = require("obs-websocket-js");
 const AkroatirioMember = require("./modules/AkroatirioMember.js");
 const axios = require('axios')
 
+
 module.exports = class Akroatirio {
     
     constructor() {
+        this.config = this.readConfig("config.json");
         this.client = undefined;
         this.obs = undefined;
         this.audience = [];
@@ -16,14 +18,13 @@ module.exports = class Akroatirio {
     }
 
     async init() {
-        let config = this.readConfig("config.json");
-        this.client = this.initalizeClient(config);
+        this.client = this.initalizeClient(this.config);
         this.obs = new OBSWebSocket();
         this.setEventHandlers();
-        await this.connect(config);
+        await this.connect(this.config);
         await this.initalizeAudience();
         console.log("==== Successfully Connected to Twitch and OBS ====");
-        setInterval(this.shuffle.bind(this), 30000);
+        setInterval(this.shuffle.bind(this), this.config['dev']['timer']);
     }
 
     async shuffle(){
@@ -47,8 +48,10 @@ module.exports = class Akroatirio {
             }
 
             for(let i = 0; i < this.audience.length; i++){
-                let userToAdd = this.queuedMembers.shift();
-                this.addToAudience(userToAdd);
+                if(this.queuedMembers.length > 0){
+                    let userToAdd = this.queuedMembers.shift();
+                    this.addToAudience(userToAdd);
+                }
             }
 
             this.haltAudience = false;
