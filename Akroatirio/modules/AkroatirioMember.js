@@ -5,7 +5,7 @@ module.exports = class AkroatirioMember {
         this.groupProps = groupComponent;
         this.emotes = emotes;
         this.textComponent = textComponent
-        this.avaliable = false;
+        this.avaliable = true;
     }
 
     setGroupProps(props){

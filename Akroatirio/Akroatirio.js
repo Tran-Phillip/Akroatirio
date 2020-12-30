@@ -2,6 +2,7 @@ const tmi = require("tmi.js");
 const fs = require("fs");
 const OBSWebSocket = require("obs-websocket-js");
 const AkroatirioMember = require("./modules/AkroatirioMember.js");
+const axios = require('axios')
 
 module.exports = class Akroatirio {
     
@@ -10,6 +11,7 @@ module.exports = class Akroatirio {
         this.obs = undefined;
         this.audience = [];
         this.queuedMembers = [];
+        this.haltAudience = false;
         this.init(); // hack to let me async in t he constructor 
     }
 
@@ -21,6 +23,43 @@ module.exports = class Akroatirio {
         await this.connect(config);
         await this.initalizeAudience();
         console.log("==== Successfully Connected to Twitch and OBS ====");
+        setInterval(this.shuffle.bind(this), 30000);
+    }
+
+    async shuffle(){
+        /**
+         * Shuffles our current audience and adds members from the queuedMembers queue.
+         */
+        console.log("==== shuffling called ====");
+        if(this.isFull() && this.queuedMembers.length > 0) {
+            console.log("---- shuffling! ----")
+            
+            let currentUsersInChat = await this.getCurrentUsersInChat();
+
+
+            this.haltAudience = true;
+            this.reset(); 
+            for(let i = 0; i < this.audience.length; i++) {
+                if(currentUsersInChat.includes(this.audience[i].getUsername()))
+                {
+                    this.queuedMembers.push(this.audience[i].getUsername());
+                }
+            }
+
+            for(let i = 0; i < this.audience.length; i++){
+                let userToAdd = this.queuedMembers.shift();
+                this.addToAudience(userToAdd);
+            }
+
+            this.haltAudience = false;
+        } 
+
+    }
+
+    async getCurrentUsersInChat(){
+        
+        const res = await axios.get('https://tmi.twitch.tv/group/user/apropori/chatters');
+        return res.data.chatters.viewers
     }
 
     async initalizeAudience() {
@@ -74,7 +113,12 @@ module.exports = class Akroatirio {
         const commandName = msg.trim(); 
 
         if(commandName == '!join'){
-            this.addToAudience(context['display-name']);
+            if(!this.haltAudience){
+                // stop people from joining the audience during a shuffle
+                this.addToAudience(context['display-name']);
+                return;
+            }
+            
         } else if(commandName[0] == '!'){
             this.handleCommand(commandName.slice(1), context['display-name']);
         }
@@ -83,7 +127,7 @@ module.exports = class Akroatirio {
 
     async addToAudience(username){
         for(let i = 0; i < this.audience.length; i++) {
-            if(!this.audience[i].isAvaliable()){
+            if(this.audience[i].isAvaliable()){
                 this.audience[i].toggle();
                 this.audience[i].setUsername(username);
                 this.setupDefaultCharacter(this.audience[i], username);
@@ -91,6 +135,9 @@ module.exports = class Akroatirio {
                 return;
             }
         }
+        // no room to join
+        console.log(`==== Queueing ${username} ==== `)
+        this.queuedMembers.push(username);
     }
 
     async handleCommand(commandName, username){
@@ -125,7 +172,22 @@ module.exports = class Akroatirio {
 
     }
 
+    isFull() {
+        for(let i = 0; i < this.audience.length; i++) {
+            if(this.audience[i].isAvaliable()) {
+                return false;
+            }
+        }
+        return true; 
+    }
 
+    reset() {
+        for(let i = 0; i < this.audience.length; i++) {
+            if(!this.audience[i].isAvaliable()){
+                this.audience[i].toggle();
+            }
+        }
+    }
 
     async connect(config){
         /**
